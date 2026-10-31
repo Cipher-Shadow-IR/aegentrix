@@ -2,6 +2,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Dict, Optional, List
 import uuid
 from ..models.approval import ApprovalRecord
+from ..core.security import sign_approval, verify_approval_signature
 
 class ApprovalManager:
     def __init__(self):
@@ -15,12 +16,29 @@ class ApprovalManager:
         operation: str,
         destination: Optional[str] = None,
         duration_minutes: int = 60,
-        metadata: Optional[Dict] = None
+        metadata: Optional[Dict] = None,
+        secret_key: Optional[str] = None
     ) -> ApprovalRecord:
+        
         now = datetime.now(timezone.utc)
         expires_at = now + timedelta(minutes=duration_minutes)
         approval_id = f"appr_{uuid.uuid4().hex[:12]}"
-        
+        created_at_str = now.isoformat()
+        expires_at_str = expires_at.isoformat()
+
+        signature = sign_approval(
+            approval_id=approval_id,
+            actor=actor,
+            target_agent_id=target_agent_id,
+            scope_resource=scope_resource,
+            operation=operation,
+            destination=destination,
+            created_at=created_at_str,
+            expires_at=expires_at_str,
+            secret_key=secret_key
+        )
+        token = f"{approval_id}.{signature}"
+
         record = ApprovalRecord(
             approval_id=approval_id,
             actor=actor,
@@ -28,10 +46,13 @@ class ApprovalManager:
             scope_resource=scope_resource,
             operation=operation,
             destination=destination,
-            created_at=now.isoformat(),
-            expires_at=expires_at.isoformat(),
+            created_at=created_at_str,
+            expires_at=expires_at_str,
             status="ACTIVE",
-            metadata=metadata or {}
+            metadata=metadata or {},
+            signature=signature,
+            token=token,
+            algorithm="HMAC-SHA256"
         )
         self._approvals[approval_id] = record
         return record
@@ -39,26 +60,93 @@ class ApprovalManager:
     def get_approval(self, approval_id: str) -> Optional[ApprovalRecord]:
         return self._approvals.get(approval_id)
 
+    def revoke_approval(self, approval_id: str) -> bool:
+        
+        record = self._approvals.get(approval_id)
+        if record:
+            record.status = "REVOKED"
+            return True
+        return False
+
+    def verify_token_integrity(self, token_or_id: str) -> tuple[bool, Optional[ApprovalRecord], str]:
+        
+        if not token_or_id:
+            return False, None, "APPROVAL_NOT_VERIFIED"
+        
+        parts = token_or_id.split(".", 1)
+        approval_id = parts[0]
+        provided_sig = parts[1] if len(parts) > 1 else None
+
+        record = self._approvals.get(approval_id)
+        if not record:
+            return False, None, "APPROVAL_NOT_VERIFIED"
+
+        is_valid = verify_approval_signature(
+            approval_id=record.approval_id,
+            actor=record.actor,
+            target_agent_id=record.target_agent_id,
+            scope_resource=record.scope_resource,
+            operation=record.operation,
+            destination=record.destination,
+            created_at=record.created_at,
+            expires_at=record.expires_at,
+            signature=record.signature or ""
+        )
+        if not is_valid:
+            return False, record, "APPROVAL_SIGNATURE_INVALID"
+
+        if provided_sig and provided_sig != record.signature:
+            return False, record, "APPROVAL_SIGNATURE_INVALID"
+
+        return True, record, "VALID"
+
     def validate_approval(
         self,
-        approval_id: str,
+        approval_id_or_token: str,
         agent_id: str,
         operation: str,
         resource: str,
         destination: Optional[str] = None
     ) -> tuple[bool, str]:
         
+        if not approval_id_or_token:
+            return False, "APPROVAL_NOT_VERIFIED"
+
+        parts = approval_id_or_token.split(".", 1)
+        approval_id = parts[0]
+        provided_sig = parts[1] if len(parts) > 1 else None
+
         record = self._approvals.get(approval_id)
         if not record:
             return False, "APPROVAL_NOT_VERIFIED"
-        
+
+        is_sig_valid = verify_approval_signature(
+            approval_id=record.approval_id,
+            actor=record.actor,
+            target_agent_id=record.target_agent_id,
+            scope_resource=record.scope_resource,
+            operation=record.operation,
+            destination=record.destination,
+            created_at=record.created_at,
+            expires_at=record.expires_at,
+            signature=record.signature or ""
+        )
+        if not is_sig_valid:
+            return False, "APPROVAL_SIGNATURE_INVALID"
+
+        if provided_sig and provided_sig != record.signature:
+            return False, "APPROVAL_SIGNATURE_INVALID"
+
         if record.status != "ACTIVE":
             return False, "APPROVAL_NOT_ACTIVE"
 
         now = datetime.now(timezone.utc)
-        expiry_dt = datetime.fromisoformat(record.expires_at)
-        if now > expiry_dt:
-            record.status = "EXPIRED"
+        try:
+            expiry_dt = datetime.fromisoformat(record.expires_at)
+            if now > expiry_dt:
+                record.status = "EXPIRED"
+                return False, "APPROVAL_EXPIRED"
+        except Exception:
             return False, "APPROVAL_EXPIRED"
 
         if record.target_agent_id != agent_id and record.target_agent_id != "*":
@@ -77,5 +165,9 @@ class ApprovalManager:
 
     def list_approvals(self) -> List[ApprovalRecord]:
         return list(self._approvals.values())
+
+    def clear(self):
+        
+        self._approvals.clear()
 
 approval_manager = ApprovalManager()
