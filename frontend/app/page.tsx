@@ -22,6 +22,7 @@ import { ScenarioRunner } from "../components/ScenarioRunner";
 import { AgentRegistryView } from "../components/AgentRegistryView";
 import { IncidentViewer } from "../components/IncidentViewer";
 import { PolicyManager } from "../components/PolicyManager";
+import { WinnerModal } from "../components/WinnerModal";
 import { RefreshCw, Play, Cpu } from "lucide-react";
 
 export default function SOCDashboard() {
@@ -34,6 +35,17 @@ export default function SOCDashboard() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [policies, setPolicies] = useState<PolicyRule[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isWinModalOpen, setIsWinModalOpen] = useState(false);
+
+  useEffect(() => {
+    const hasSeenWin = typeof window !== "undefined" ? sessionStorage.getItem("aegentrix_win_seen") : null;
+    if (!hasSeenWin) {
+      setIsWinModalOpen(true);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("aegentrix_win_seen", "true");
+      }
+    }
+  }, []);
 
   const loadAllData = useCallback(async () => {
     setIsLoading(true);
@@ -74,6 +86,7 @@ export default function SOCDashboard() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           systemHealth={systemHealth}
+          onOpenWinModal={() => setIsWinModalOpen(true)}
         />
 
         <main className="px-3 sm:px-6 space-y-5 sm:space-y-6">
@@ -280,6 +293,11 @@ export default function SOCDashboard() {
           </div>
         </footer>
       </div>
+
+      <WinnerModal
+        isOpen={isWinModalOpen}
+        onClose={() => setIsWinModalOpen(false)}
+      />
     </div>
   );
 }

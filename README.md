@@ -8,8 +8,23 @@
 
 <h2 align="center">🛡️ Deterministic Security & Governance Layer for Multi-Agent AI Workflows</h2>
 <p align="center">
-  <strong>Next-Gen AI Security Framework • Hackathon 2026</strong><br />
-  <em>Engineered with Precision by Team AEGENTRIX</em>
+  <strong>🏆 1st Place Winner • MLH Hacktoberfest Hack Day Ahmedabad x Navra Community 2026</strong><br />
+  <strong>🥇 Winner · Best Open-Source AI Project &nbsp;|&nbsp; 🌟 Winner · Best Use of Gemma</strong><br />
+  <em>Engineered with Precision by Team AEGENTRIX (Cipher-Coders):</em><br />
+  <a href="https://github.com/Cipher-Shadow-IR"><strong>Ishaan Ray</strong></a> &bull;
+  <a href="https://github.com/Rishi-prajapati-git"><strong>Rishi Prajapati</strong></a> &bull;
+  <a href="https://github.com/Urvi2946"><strong>Urvi Rathod</strong></a><br />
+  <a href="https://www.mlh.com/events/hacktoberfest-hack-day-ahmedabad-x-navracommunity/submissions"><strong>🔗 View Official MLH Submission</strong></a>
+</p>
+
+---
+
+<p align="center">
+  <a href="https://www.mlh.com/events/hacktoberfest-hack-day-ahmedabad-x-navracommunity/submissions">
+    <img src="https://img.shields.io/badge/MLH%20Winner-1st%20Place%20Overall-gold?style=for-the-badge&logo=github" alt="1st Place Winner" />
+  </a>
+  <img src="https://img.shields.io/badge/Award-Best%20Open--Source%20AI%20Project-success?style=for-the-badge" alt="Best Open Source AI Project" />
+  <img src="https://img.shields.io/badge/Award-Best%20Use%20of%20Gemma-blueviolet?style=for-the-badge&logo=google" alt="Best Use of Gemma" />
 </p>
 
 ---
@@ -316,9 +331,9 @@ python -m pytest backend/tests/ -v
 
 | Member | Assigned Phases | Core Technical Responsibilities |
 | :--- | :--- | :--- |
-| **Ishaan Ray**<br />*(Team Leader & Full-Stack Lead)* | **Phases 6, 8** | • **Task 6.1**: SQLite persistent database architecture (SQLAlchemy / aiosqlite)<br />• **Task 6.2**: Export endpoint for audit history (CSV/JSON download)<br />• **Task 8.1 & 8.2**: Next.js App Router cyber dashboard & real-time KPI overview<br />• **Task 8.3 & 8.4**: Agent Registry card view & 7-scenario interactive runner UI<br />• **Task 8.5 & 8.6**: Audit timeline component with multi-factor filters & Incident graph viewer<br />• **Task 8.7**: Policy Explorer interface & Verifiable Admin Approval modal |
-| **Rishi Prajapati**<br />*(Security Core & Temporal Lead)* | **Phases 3, 5, 9** | • **Task 3.1**: Real-time dynamic agent revocation mid-workflow execution<br />• **Task 3.2**: Allowlisted tool parameter schemas & network SSRF firewalls<br />• **Task 5.1**: Sliding time-window correlation engine (300s window & state cleanup)<br />• **Task 5.2**: Cumulative byte-size data exfiltration threshold rule (50KB boundary)<br />• **Task 5.3**: Incident status lifecycle state machine (`OPEN` $\rightarrow$ `CONTAINED` $\rightarrow$ `RESOLVED`)<br />• **Task 9.1 & 9.2**: Automated tests for agent revocation, malformed JSON, & unauthorized tools<br />• **Task 9.3 & 9.4**: Demo video walkthrough & presentation assets |
-| **Urvi**<br />*(AI Integration & Cryptography Lead)* | **Phases 2, 4, 7** | • **Task 2.1**: Policy export/import schemas supporting declarative JSON/YAML definitions<br />• **Task 2.2**: Cryptographic HMAC / digital signatures for tamper-proof approval tokens<br />• **Task 4.1**: Integration with real open-weight model endpoints (Google Gemma 2 via Ollama/Groq)<br />• **Task 4.2**: Input truncation safeguards & strict timeout boundaries for model analysis<br />• **Task 7.1**: Administrative authentication (JWT / API Key) for approval token endpoints<br />• **Task 7.2**: High-throughput pagination cursor for scalable audit log retrieval |
+| [**Ishaan Ray**](https://github.com/Cipher-Shadow-IR)<br />*(Team Leader & Full-Stack Lead)* | **Phases 6, 8** | • **Task 6.1**: SQLite persistent database architecture (SQLAlchemy / aiosqlite)<br />• **Task 6.2**: Export endpoint for audit history (CSV/JSON download)<br />• **Task 8.1 & 8.2**: Next.js App Router cyber dashboard & real-time KPI overview<br />• **Task 8.3 & 8.4**: Agent Registry card view & 7-scenario interactive runner UI<br />• **Task 8.5 & 8.6**: Audit timeline component with multi-factor filters & Incident graph viewer<br />• **Task 8.7**: Policy Explorer interface & Verifiable Admin Approval modal |
+| [**Rishi Prajapati**](https://github.com/Rishi-prajapati-git)<br />*(Security Core & Temporal Lead)* | **Phases 3, 5, 9** | • **Task 3.1**: Real-time dynamic agent revocation mid-workflow execution<br />• **Task 3.2**: Allowlisted tool parameter schemas & network SSRF firewalls<br />• **Task 5.1**: Sliding time-window correlation engine (300s window & state cleanup)<br />• **Task 5.2**: Cumulative byte-size data exfiltration threshold rule (50KB boundary)<br />• **Task 5.3**: Incident status lifecycle state machine (`OPEN` $\rightarrow$ `CONTAINED` $\rightarrow$ `RESOLVED`)<br />• **Task 9.1 & 9.2**: Automated tests for agent revocation, malformed JSON, & unauthorized tools<br />• **Task 9.3 & 9.4**: Demo video walkthrough & presentation assets |
+| [**Urvi Rathod**](https://github.com/Urvi2946)<br />*(AI Integration & Cryptography Lead)* | **Phases 2, 4, 7** | • **Task 2.1**: Policy export/import schemas supporting declarative JSON/YAML definitions<br />• **Task 2.2**: Cryptographic HMAC / digital signatures for tamper-proof approval tokens<br />• **Task 4.1**: Integration with real open-weight model endpoints (Google Gemma 2 via Ollama/Groq)<br />• **Task 4.2**: Input truncation safeguards & strict timeout boundaries for model analysis<br />• **Task 7.1**: Administrative authentication (JWT / API Key) for approval token endpoints<br />• **Task 7.2**: High-throughput pagination cursor for scalable audit log retrieval |
 
 ---
 
