@@ -16,7 +16,7 @@ from ..models.requests import (
     PolicyImportResponse
 )
 from ..models.approval import ApprovalRecord
-from ..models.audit import AuditEvent, Incident
+from ..models.audit import AuditEvent, Incident, PaginatedAuditEventsResponse
 
 from ..services.agent_registry import agent_registry
 from ..services.policy_engine import policy_engine
@@ -105,12 +105,57 @@ def execute_tool(req: ToolExecutionRequest):
 
 @api_router.get("/api/events", response_model=List[AuditEvent])
 def get_events(
+    response: Response,
     workflow_id: Optional[str] = Query(None),
     agent_id: Optional[str] = Query(None),
     decision: Optional[str] = Query(None),
-    limit: int = Query(50, le=200)
+    limit: int = Query(50, ge=1, le=200),
+    cursor: Optional[str] = Query(None, description="Opaque pagination cursor token"),
+    direction: str = Query("next", pattern="^(next|prev)$")
 ):
-    return audit_store.get_events(workflow_id=workflow_id, agent_id=agent_id, decision=decision, limit=limit)
+    
+    page, next_cur, prev_cur, has_more, total_count = audit_store.get_events_paginated(
+        workflow_id=workflow_id,
+        agent_id=agent_id,
+        decision=decision,
+        limit=limit,
+        cursor=cursor,
+        direction=direction
+    )
+    if next_cur:
+        response.headers["X-Next-Cursor"] = next_cur
+    if prev_cur:
+        response.headers["X-Prev-Cursor"] = prev_cur
+    response.headers["X-Has-More"] = str(has_more).lower()
+    response.headers["X-Total-Count"] = str(total_count)
+    return page
+
+@api_router.get("/api/events/paginated", response_model=PaginatedAuditEventsResponse)
+def get_events_paginated(
+    workflow_id: Optional[str] = Query(None),
+    agent_id: Optional[str] = Query(None),
+    decision: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    cursor: Optional[str] = Query(None, description="Opaque cursor token from previous request"),
+    direction: str = Query("next", pattern="^(next|prev)$")
+):
+    
+    page, next_cur, prev_cur, has_more, total_count = audit_store.get_events_paginated(
+        workflow_id=workflow_id,
+        agent_id=agent_id,
+        decision=decision,
+        limit=limit,
+        cursor=cursor,
+        direction=direction
+    )
+    return PaginatedAuditEventsResponse(
+        events=page,
+        next_cursor=next_cur,
+        prev_cursor=prev_cur,
+        has_more=has_more,
+        total_count=total_count,
+        limit=limit
+    )
 
 @api_router.get("/api/incidents", response_model=List[Incident])
 def get_incidents(limit: int = Query(20, le=100)):
