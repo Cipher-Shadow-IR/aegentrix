@@ -68,8 +68,8 @@ export default function SOCDashboard() {
   }, [loadAllData]);
 
   return (
-    <div className="min-h-screen bg-[#f1f2fa] text-[#383139] flex flex-col items-center">
-      <div className="w-full max-w-7xl flex flex-col space-y-4 sm:space-y-6 pb-12">
+    <div className="min-h-screen bg-[#f1f2fa] text-[#383139] flex flex-col items-center overflow-x-hidden w-full">
+      <div className="w-full max-w-7xl flex flex-col space-y-4 sm:space-y-6 pb-12 overflow-x-hidden">
         <Navbar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -165,7 +165,7 @@ export default function SOCDashboard() {
             {activeTab === "overview" && (
               <div className="space-y-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-                  <div className="lg:col-span-2">
+                  <div className="lg:col-span-2 min-w-0">
                     <AuditTimeline
                       events={events.slice(0, 10)}
                       onRefresh={loadAllData}
@@ -173,7 +173,7 @@ export default function SOCDashboard() {
                     />
                   </div>
 
-                  <div className="space-y-6">
+                  <div className="space-y-6 min-w-0">
                     <IncidentViewer
                       incidents={incidents.slice(0, 5)}
                       onRefresh={loadAllData}
