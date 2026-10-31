@@ -1,5 +1,5 @@
 import os
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel
 
 class Settings(BaseModel):
@@ -20,9 +20,11 @@ class Settings(BaseModel):
     default_policy_file: str = os.getenv("DEFAULT_POLICY_FILE", "./backend/app/data/policies.yaml")
 
     ai_analysis_enabled: bool = os.getenv("AI_ANALYSIS_ENABLED", "false").lower() == "true"
-    ai_model_provider: str = os.getenv("AI_MODEL_PROVIDER", "none")
+    ai_model_provider: str = os.getenv("AI_MODEL_PROVIDER", "none") 
     ai_model_name: str = os.getenv("AI_MODEL_NAME", "gemma-2b-it")
     ai_model_api_key: str = os.getenv("AI_MODEL_API_KEY", "")
+    ai_model_base_url: Optional[str] = os.getenv("AI_MODEL_BASE_URL", None)
+    ai_model_timeout_seconds: float = float(os.getenv("AI_MODEL_TIMEOUT_SECONDS", "10.0"))
 
     temporal_window_seconds: int = int(os.getenv("TEMPORAL_WINDOW_SECONDS", "300"))
     max_consecutive_denials_threshold: int = int(os.getenv("MAX_CONSECUTIVE_DENIALS_THRESHOLD", "3"))
