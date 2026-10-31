@@ -21,6 +21,7 @@ class SecurityGateway:
         claims_verbal_approval: Optional[str] = None,
         approval_id: Optional[str] = None,
         simulate_model_failure: bool = False,
+        parameters: Optional[Dict[str, Any]] = None,
         raw_metadata: Optional[Dict[str, Any]] = None
     ) -> tuple[PolicyEvaluationResult, AuditEvent]:
         
@@ -40,7 +41,8 @@ class SecurityGateway:
             destination=destination,
             approval_id=approval_id,
             claims_verbal_approval=claims_verbal_approval,
-            advisory_model_flag=has_advisory_flag
+            advisory_model_flag=has_advisory_flag,
+            parameters=parameters
         )
 
         provenance = ProvenanceInfo(
@@ -48,6 +50,10 @@ class SecurityGateway:
             untrusted_input_origin=untrusted_origin,
             claims_approval_by=claims_verbal_approval
         )
+
+        meta = dict(raw_metadata or {})
+        if parameters:
+            meta["tool_parameters"] = parameters
 
         audit_event = audit_store.record_event(
             workflow_id=workflow_id,
@@ -61,7 +67,7 @@ class SecurityGateway:
             matched_policy_id=eval_result.matched_policy_id,
             provenance=provenance,
             advisory_model_analysis=advisory_analysis,
-            raw_metadata=raw_metadata
+            raw_metadata=meta
         )
 
         temporal_analyzer.analyze_event_sequence(workflow_id)

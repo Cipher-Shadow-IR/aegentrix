@@ -8,6 +8,7 @@ from ..models.policy import (
     OperationType,
     PolicyRule
 )
+from ..models.tools import validate_tool_execution
 from .agent_registry import agent_registry
 from .approval_manager import approval_manager
 
@@ -95,7 +96,8 @@ class PolicyEngine:
         destination: Optional[str] = None,
         approval_id: Optional[str] = None,
         claims_verbal_approval: Optional[str] = None,
-        advisory_model_flag: bool = False
+        advisory_model_flag: bool = False,
+        parameters: Optional[Dict[str, Any]] = None
     ) -> PolicyEvaluationResult:
         now_str = datetime.now(timezone.utc).isoformat()
 
@@ -109,10 +111,11 @@ class PolicyEngine:
             )
 
         if agent.status != "ACTIVE":
+            reason_suffix = f" (Reason: {agent.revocation_reason})" if agent.revocation_reason else ""
             return PolicyEvaluationResult(
                 decision=DecisionType.DENY,
                 reason_code=ReasonCode.AGENT_SUSPENDED_OR_REVOKED,
-                reason_description=f"Agent '{source_agent_id}' is {agent.status}; access denied.",
+                reason_description=f"Agent '{source_agent_id}' is {agent.status}{reason_suffix}; access denied in real-time.",
                 evaluated_at=now_str
             )
 
@@ -165,8 +168,26 @@ class PolicyEngine:
             )
 
         has_res = any(fnmatch.fnmatch(target_resource, allowed_res) for allowed_res in agent.capabilities.allowed_resources)
+        
         if operation == "TOOL_CALL":
-            has_res = any(fnmatch.fnmatch(target_resource, tool) for tool in agent.capabilities.allowed_tools)
+            has_tool_perm = any(fnmatch.fnmatch(target_resource, tool) for tool in agent.capabilities.allowed_tools)
+            if not has_tool_perm and not has_valid_approval:
+                return PolicyEvaluationResult(
+                    decision=DecisionType.DENY,
+                    reason_code=ReasonCode.UNSAFE_TOOL_CALL,
+                    reason_description=f"Agent '{agent.name}' is not authorized to invoke tool '{target_resource}'.",
+                    evaluated_at=now_str
+                )
+            
+            is_valid, val_err, _ = validate_tool_execution(target_resource, parameters)
+            if not is_valid:
+                return PolicyEvaluationResult(
+                    decision=DecisionType.DENY,
+                    reason_code=ReasonCode.UNSAFE_TOOL_CALL,
+                    reason_description=f"Tool execution parameters rejected for '{target_resource}': {val_err}",
+                    evaluated_at=now_str
+                )
+            has_res = True
 
         if not has_res and not has_valid_approval:
             return PolicyEvaluationResult(

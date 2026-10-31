@@ -1,7 +1,14 @@
 import pytest
 from backend.app.services.policy_engine import policy_engine
 from backend.app.services.approval_manager import approval_manager
+from backend.app.services.agent_registry import agent_registry
 from backend.app.models.policy import DecisionType, ReasonCode
+
+@pytest.fixture(autouse=True)
+def reset_registry():
+    agent_registry.reset()
+    yield
+    agent_registry.reset()
 
 def test_authorized_research_read():
     
@@ -79,3 +86,77 @@ def test_unknown_agent_denied_by_default():
     )
     assert res.decision == DecisionType.DENY
     assert res.reason_code == ReasonCode.AGENT_NOT_FOUND
+
+def test_dynamic_agent_suspension_and_revocation_mid_workflow():
+    
+    res1 = policy_engine.evaluate(
+        source_agent_id="agent://research-01",
+        operation="READ",
+        target_resource="res://research/paper.pdf"
+    )
+    assert res1.decision == DecisionType.ALLOW
+
+    agent_registry.suspend_agent("agent://research-01", reason="Anomalous network spike detected")
+
+    res2 = policy_engine.evaluate(
+        source_agent_id="agent://research-01",
+        operation="READ",
+        target_resource="res://research/paper.pdf"
+    )
+    assert res2.decision == DecisionType.DENY
+    assert res2.reason_code == ReasonCode.AGENT_SUSPENDED_OR_REVOKED
+    assert "SUSPENDED" in res2.reason_description
+    assert "Anomalous network spike detected" in res2.reason_description
+
+    agent_registry.revoke_agent("agent://research-01", reason="Security breach confirmed")
+    res3 = policy_engine.evaluate(
+        source_agent_id="agent://research-01",
+        operation="READ",
+        target_resource="res://research/paper.pdf"
+    )
+    assert res3.decision == DecisionType.DENY
+    assert res3.reason_code == ReasonCode.AGENT_SUSPENDED_OR_REVOKED
+    assert "REVOKED" in res3.reason_description
+
+def test_allowlisted_tool_parameter_validation_success():
+    
+    res = policy_engine.evaluate(
+        source_agent_id="agent://operations-01",
+        operation="TOOL_CALL",
+        target_resource="tool://sandbox_health_check",
+        parameters={"target_sandbox_id": "sbx-alpha-9", "deep_check": True}
+    )
+    assert res.decision == DecisionType.ALLOW
+    assert res.reason_code == ReasonCode.AUTHORIZED
+
+def test_tool_execution_unauthorized_tool_denied():
+    
+    res = policy_engine.evaluate(
+        source_agent_id="agent://research-01",
+        operation="TOOL_CALL",
+        target_resource="tool://worker_reboot",
+        parameters={"worker_id": "wrk-1", "force": True}
+    )
+    assert res.decision == DecisionType.DENY
+    assert res.reason_code == ReasonCode.UNSAFE_TOOL_CALL
+
+def test_tool_execution_parameter_validation_failure():
+    
+    res_ssrf = policy_engine.evaluate(
+        source_agent_id="agent://research-01",
+        operation="TOOL_CALL",
+        target_resource="tool://web_scraper",
+        parameters={"url": "http://127.0.0.1:8000/internal_secrets", "timeout_sec": 5}
+    )
+    assert res_ssrf.decision == DecisionType.DENY
+    assert res_ssrf.reason_code == ReasonCode.UNSAFE_TOOL_CALL
+    assert "SSRF" in res_ssrf.reason_description
+
+    res_bounds = policy_engine.evaluate(
+        source_agent_id="agent://research-01",
+        operation="TOOL_CALL",
+        target_resource="tool://web_scraper",
+        parameters={"url": "https://example.org/news", "timeout_sec": 999}
+    )
+    assert res_bounds.decision == DecisionType.DENY
+    assert res_bounds.reason_code == ReasonCode.UNSAFE_TOOL_CALL
